@@ -138,25 +138,26 @@ def scrape_sports_markets(output_csv: str = 'kalshi_sports_prices.csv') -> None:
 
         for ev in sports_events:
             event_ticker = ev.get('event_ticker')
-            try:
-                markets = get_event_markets(event_ticker)
-                for market in markets:
-                    ticker = market.get('ticker')
-                    if not ticker:
-                        continue
+            if "MLB" in event_ticker:
+                try:
+                    markets = get_event_markets(event_ticker)
+                    for market in markets:
+                        ticker = market.get('ticker')
+                        if not ticker:
+                            continue
 
-                    # Directly extract prices from market object
-                    yes_bid = market.get('yes_bid')
-                    yes_ask = market.get('yes_ask')
-                    no_bid = market.get('no_bid')
-                    no_ask = market.get('no_ask')
-                    last_price = market.get('last_price')
-                    timestamp = datetime.utcnow().isoformat()
+                        # Directly extract prices from market object
+                        yes_bid = market.get('yes_bid')
+                        yes_ask = market.get('yes_ask')
+                        no_bid = market.get('no_bid')
+                        no_ask = market.get('no_ask')
+                        last_price = market.get('last_price')
+                        timestamp = datetime.utcnow().isoformat()
 
-                    writer.writerow([timestamp, event_ticker, ticker, yes_bid, yes_ask, no_bid, no_ask, last_price])
-                    time.sleep(0.1)
-            except Exception as e:
-                print(f"[ERROR] Failed to get markets for {event_ticker}: {e}")
+                        writer.writerow([timestamp, event_ticker, ticker, yes_bid, yes_ask, no_bid, no_ask, last_price])
+                        time.sleep(0.1)
+                except Exception as e:
+                    print(f"[ERROR] Failed to get markets for {event_ticker}: {e}")
 
 if __name__ == '__main__':
     scrape_sports_markets()
