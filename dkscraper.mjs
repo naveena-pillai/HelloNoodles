@@ -9,7 +9,6 @@ const __dirname = dirname(__filename);
 
 const API_URL = "https://sportsbook-nash.draftkings.com/api/sportscontent/dkusmd/v1/leagues/84240";
 const CSV_PATH = path.join(__dirname, 'data', 'csv', 'dk.csv');
-const INTERVAL = 60 * 1000; // 60 seconds
 
 async function getDraftKingsMLB() {
   console.log('Starting DraftKings MLB scrape...');
@@ -18,7 +17,7 @@ async function getDraftKingsMLB() {
     const res = await fetch(API_URL);
     const data = await res.json();
 
-    const selections = data["selections"];
+    const selections = data["selections"] || [];
     console.log(`Found ${selections.length} selections`);
 
     const rows = [];
@@ -41,7 +40,6 @@ async function getDraftKingsMLB() {
         };
 
         rows.push(row);
-        console.log(`Added row: ${JSON.stringify(row)}`);
       } catch (e) {
         console.error("Error parsing selection:", e);
       }
@@ -63,22 +61,15 @@ function writeCSV(rows) {
   
   const headers = ['id', 'marketId', 'label', 'americanOdds', 'decimalOdds', 'fractionalOdds', 'trueOdds', 'outcomeType', 'sortOrder', 'tags', 'main', 'collected_at'];
   const csvLines = rows.map(row => headers.map(h => row[h]).join(','));
-  
+  const allLines = [headers.join(','), ...csvLines];
+
   try {
     // Ensure directory exists
     fs.mkdirSync(path.dirname(CSV_PATH), { recursive: true });
-    
-    // Check if file exists to decide whether to write headers
-    const fileExists = fs.existsSync(CSV_PATH);
-    
-    if (!fileExists) {
-      fs.writeFileSync(CSV_PATH, headers.join(',') + '\n');
-      console.log('Created new CSV file with headers');
-    }
-    
-    // Append data
-    fs.appendFileSync(CSV_PATH, csvLines.join('\n') + '\n');
-    console.log(`Successfully appended ${rows.length} rows to CSV`);
+
+    // Overwrite file with new data
+    fs.writeFileSync(CSV_PATH, allLines.join('\n') + '\n');
+    console.log(`Wrote ${rows.length} rows to ${CSV_PATH}`);
     
   } catch (e) {
     console.error('Error writing to CSV:', e);
@@ -86,26 +77,8 @@ function writeCSV(rows) {
 }
 
 async function main() {
-  console.log('MLB Scraper starting...');
-  
-  while (true) {
-    try {
-      const rows = await getDraftKingsMLB();
-      
-      if (rows.length > 0) {
-        writeCSV(rows);
-        console.log(`[${new Date().toLocaleTimeString()}] Wrote ${rows.length} rows to dk.csv`);
-      } else {
-        console.log(`[${new Date().toLocaleTimeString()}] No valid MLB rows found`);
-      }
-      
-    } catch (e) {
-      console.error('Scrape error:', e);
-    }
-    
-    console.log(`Waiting ${INTERVAL/1000} seconds for next scrape...`);
-    await new Promise(r => setTimeout(r, INTERVAL));
-  }
+  const rows = await getDraftKingsMLB();
+  writeCSV(rows);
 }
 
 main();
