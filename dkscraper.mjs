@@ -12,6 +12,7 @@ const CSV_PATH = path.join(__dirname, 'data', 'csv', 'dk.csv');
 const INTERVAL = 60 * 1000; // 60 seconds
 
 async function getDraftKingsMLB() {
+  // Function to get baseball data from DraftKings
   console.log('Starting DraftKings MLB scrape...');
 
   try {
@@ -56,6 +57,7 @@ async function getDraftKingsMLB() {
 }
 
 function writeCSV(rows) {
+  // Function to write collected data to csv
   if (rows.length === 0) {
     console.log('No rows to write to CSV');
     return;
