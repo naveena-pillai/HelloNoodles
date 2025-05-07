@@ -8,8 +8,8 @@ from cryptography.hazmat.backends import default_backend
 import base64
 
 # Kalshi API credentials
-API_KEY_ID = '2dc1eefe-5e3c-447b-9536-8fb59bbee5b7'
-PRIVATE_KEY_PATH = 'naveena.txt'
+API_KEY_ID = 'ee9165d8-5173-4c0f-a764-006598891621'
+PRIVATE_KEY_PATH = 'kalshi.txt'
 BASE_URL = 'https://api.elections.kalshi.com/trade-api/v2'
 
 def load_private_key(path):
@@ -95,69 +95,38 @@ def get_market_prices(market_ticker: str) -> list:
     resp.raise_for_status()
     return resp.json().get('prices', [])
 
-# def scrape_sports_markets(output_csv: str = 'kalshi_sports_prices.csv') -> None:
-#     events = get_open_events()
-#     sports_events = [e for e in events if e.get('category', '').lower() == 'sports'][:10]  # Limit to 10
-
-#     with open(output_csv, 'w', newline='') as f:
-#         writer = csv.writer(f)
-#         writer.writerow(['timestamp', 'event_ticker', 'market_ticker', 'yes_price', 'no_price'])
-
-#         for ev in sports_events:
-#             event_ticker = ev.get('event_ticker')
-#             try:
-#                 if "MLB" in event_ticker:
-#                     markets = get_event_markets(event_ticker)
-#                     import json
-#                     print(f"[DEBUG] Event markets for {event_ticker}:")
-#                     print(json.dumps(markets, indent=2))
-#                     for market in markets:
-#                         ticker = market.get('ticker')
-#                         if not ticker:
-#                             continue
-#                         try:
-#                             prices = get_market_prices(ticker)
-#                             yes_price = next((p['price'] for p in reversed(prices) if p['side'] == 'YES'), None)
-#                             no_price = next((p['price'] for p in reversed(prices) if p['side'] == 'NO'), None)
-#                             timestamp = prices[-1].get('ts') if prices else None
-#                             writer.writerow([timestamp, event_ticker, ticker, yes_price, no_price])
-#                             time.sleep(0.2)
-#                         except Exception as e:
-#                             print(f"[WARNING] Could not fetch prices for {ticker}: {e}")
-#             except Exception as e:
-#                 print(f"[ERROR] Failed to get markets for {event_ticker}: {e}")
-#                 continue
-
 def scrape_sports_markets(output_csv: str = 'kalshi_sports_prices.csv') -> None:
     events = get_open_events()
-    sports_events = [e for e in events if e.get('category', '').lower() == 'sports'][:10]  # Limit to 10 for testing
+    sports_events = [e for e in events if e.get('category', '').lower() == 'sports']#[:10]  # Limit to 10 for testing
 
     with open(output_csv, 'w', newline='') as f:
         writer = csv.writer(f)
-        writer.writerow(['timestamp', 'event_ticker', 'market_ticker', 'yes_bid', 'yes_ask', 'no_bid', 'no_ask', 'last_price'])
+        writer.writerow(['timestamp', 'event_ticker', 'yes_sub_title','market_ticker', 'yes_bid', 'yes_ask', 'no_bid', 'no_ask', 'last_price'])
 
         for ev in sports_events:
             event_ticker = ev.get('event_ticker')
             if "MLB" in event_ticker:
-                try:
-                    markets = get_event_markets(event_ticker)
-                    for market in markets:
-                        ticker = market.get('ticker')
-                        if not ticker:
-                            continue
-
-                        # Directly extract prices from market object
-                        yes_bid = market.get('yes_bid')
-                        yes_ask = market.get('yes_ask')
-                        no_bid = market.get('no_bid')
-                        no_ask = market.get('no_ask')
-                        last_price = market.get('last_price')
-                        timestamp = datetime.utcnow().isoformat()
-
-                        writer.writerow([timestamp, event_ticker, ticker, yes_bid, yes_ask, no_bid, no_ask, last_price])
-                        time.sleep(0.1)
-                except Exception as e:
-                    print(f"[ERROR] Failed to get markets for {event_ticker}: {e}")
+                if not event_ticker.startswith('KXMLBWORLD'):
+                    try:
+                        markets = get_event_markets(event_ticker)
+                        for market in markets:
+                            ticker = market.get('ticker')
+                            if not ticker:
+                                continue
+        
+                            # Directly extract prices from market object
+                            yes_sub_title = market.get('yes_sub_title')
+                            yes_bid = market.get('yes_bid')
+                            yes_ask = market.get('yes_ask')
+                            no_bid = market.get('no_bid')
+                            no_ask = market.get('no_ask')
+                            last_price = market.get('last_price')
+                            timestamp = datetime.utcnow().isoformat()
+        
+                            writer.writerow([timestamp, event_ticker, yes_sub_title, ticker, yes_bid, yes_ask, no_bid, no_ask, last_price])
+                            time.sleep(0.1)
+                    except Exception as e:
+                        print(f"[ERROR] Failed to get markets for {event_ticker}: {e}")
 
 if __name__ == '__main__':
     scrape_sports_markets()
